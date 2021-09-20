@@ -3,7 +3,7 @@ import io
 import numpy as np
 import pandas as pd
 from astropy.io import fits
-
+from astropy.table import Table
 
 def raw2df(
     raw: io.BufferedReader,
@@ -38,30 +38,31 @@ def df2fits(
     """
 
     hdr = fits.Header()
-    # Incluí parte del sample Header de TREG_091209.cal.acs.txt,
-    # de Single Dish FITS (SDFITS)
-    hdr["SIMPLE"] = ("T", "/ conforms to FITS standard")
-    hdr["BITPIX"] = (8, "/ conforms to FITS standard")
-    hdr["NAXIS"] = (0, "/ number of array dimensions")
-    hdr["EXTEND"] = ("T", "/File contains extensions")
-    hdr["DATE"] = ("2010-06-15", "/")
-    hdr["ORIGIN"] = ("IAR", "/ origin of observation")
-    hdr["TELESCOP"] = ("Antena del IAR", "/ the telescope used")
+
+    # Inclui parte del sample Header de TREG_091209.cal.acs.txt, 
+    # de Single Dish FITS (SDFITS) 
+    hdr['SIMPLE'] = ('T','/ conforms to FITS standard')
+    hdr['BITPIX'] = (8, '/ conforms to FITS standard')
+    hdr['NAXIS'] = (0, '/ number of array dimensions')
+    hdr['EXTEND']  = ('T','/File contains extensions')
+    hdr['DATE']    = ('2010-06-15', '/')    
+    hdr['ORIGIN']  = ('IAR', '/ origin of observation')
+    hdr['TELESCOP']= ('Antena del IAR','/ the telescope used')
     hdr["GUIDEVER"] = (
         "DeepSpyce ver1.0",
         "/ this file was created by DeepSpyce",
     )
-    hdr["FITSVER"] = ("1.6", "/ FITS definition version")
-
-    # -----------------------------------------------------------------------
-    primary_hdu = fits.PrimaryHDU(data, header=hdr)
-    # primary_hdu = fits.BinTableHDU(data, header=hdr, character_as_bytes=True)
-    # BinTable tira error: TypeError: Table data has incorrect type.
-    hdul = fits.HDUList([primary_hdu])
+    hdr['FITSVER'] = ('1.6','/ FITS definition version')
+    
+   #-----------------------------------------------------------------------
+    # aux=struct.pack('i', len(aux))+aux.encode()
+    primary_hdu = fits.PrimaryHDU(header=hdr)
+    t = Table(np.asarray(data))
+    secondary_hdu = fits.BinTableHDU(t,header=hdr, name='SINGLE DISH')
+    hdul = fits.HDUList([primary_hdu,secondary_hdu])
     hdul.writeto(name, overwrite=overwrite)
-
+    
     return
-
 
 if __name__ == "__main__":
     path = input("Please, enter your raw data path: ")
